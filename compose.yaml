@@ -29,7 +29,7 @@ services:
     environment:
       - PASSWORD_FILE_PATH=/run/secrets/db-password
       - DB_HOST=db
-      - DB_NAME=example
+      - DB_NAME=user_auth
       - DB_USER=root
     develop:
       watch:
