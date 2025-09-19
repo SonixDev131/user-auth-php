@@ -2,6 +2,7 @@
 
 require_once 'database_connection.php';
 
+$success_message = '';
 $error_message = '';
 
 if ($_POST) {
@@ -16,9 +17,20 @@ if ($_POST) {
     } elseif (strlen($password) < 8) {
         $error_message = 'Password must be at least 8 characters long.';
     } else {
-        // Here you would typically hash the password and store the user in the database
-        // For demonstration, we'll just print a success message
-        echo "User registered successfully!";
+        $stmt = $db_handle->prepare("SELECT COUNT(*) FROM users WHERE username = :username");
+        $stmt->execute(['username' => $username]);
+        $count = $stmt->fetchColumn();
+        if ($count > 0) {
+            $error_message = 'Username already exists.';
+        } else {
+            $password_hash = password_hash($password, PASSWORD_BCRYPT);
+            $stmt = $db_handle->prepare("INSERT INTO users (username, password_hash) VALUES (:username, :password_hash)");
+            if ($stmt->execute(['username' => $username, 'password_hash' => $password_hash])) {
+                $success_message = 'Registration successful. You can now log in.';
+            } else {
+                $error_message = 'Registration failed. Please try again.';
+            }
+        }
     }
 
 }
@@ -27,6 +39,11 @@ if ($_POST) {
 <?php if ($error_message): ?>
     <div style="color: red;">
         <?php echo htmlspecialchars($error_message); ?>
+    </div>
+<?php endif; ?>
+<?php if ($success_message): ?>
+    <div style="color: green;">
+        <?php echo htmlspecialchars($success_message); ?>
     </div>
 <?php endif; ?>
 
