@@ -17,19 +17,25 @@ if ($_POST) {
     } elseif (strlen($password) < 8) {
         $error_message = 'Password must be at least 8 characters long.';
     } else {
-        $stmt = $db_handle->prepare("SELECT COUNT(*) FROM users WHERE username = :username");
-        $stmt->execute(['username' => $username]);
-        $count = $stmt->fetchColumn();
-        if ($count > 0) {
-            $error_message = 'Username already exists.';
-        } else {
-            $password_hash = password_hash($password, PASSWORD_BCRYPT);
-            $stmt = $db_handle->prepare("INSERT INTO users (username, password_hash) VALUES (:username, :password_hash)");
-            if ($stmt->execute(['username' => $username, 'password_hash' => $password_hash])) {
-                $success_message = 'Registration successful. You can now log in.';
+        try {
+            $stmt = $db_handle->prepare("SELECT COUNT(*) FROM users WHERE username = :username");
+            $stmt->execute(['username' => $username]);
+            $count = $stmt->fetchColumn();
+            if ($count > 0) {
+                $error_message = 'Username already exists.';
             } else {
-                $error_message = 'Registration failed. Please try again.';
+                $password_hash = password_hash($password, PASSWORD_BCRYPT);
+                $stmt = $db_handle->prepare("INSERT INTO users (username, password_hash) VALUES (:username, :password_hash)");
+                if ($stmt->execute(['username' => $username, 'password_hash' => $password_hash])) {
+                    $success_message = 'Registration successful. You can now log in.';
+                    header("Location: login.php");
+                    exit();
+                } else {
+                    $error_message = 'Registration failed. Please try again.';
+                }
             }
+        } catch (PDOException $e) {
+            $error_message = 'Database error: ' . $e->getMessage();
         }
     }
 
